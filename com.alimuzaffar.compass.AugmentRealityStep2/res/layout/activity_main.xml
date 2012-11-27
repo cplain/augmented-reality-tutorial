@@ -1,0 +1,18 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <com.alimuzaffar.compass.CameraSurfaceView
+        android:id="@+id/cameraSurfaceView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
+    
+        <com.alimuzaffar.compass.DrawSurfaceView
+	        android:id="@+id/drawSurfaceView"
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent" />
+
+</FrameLayout>
