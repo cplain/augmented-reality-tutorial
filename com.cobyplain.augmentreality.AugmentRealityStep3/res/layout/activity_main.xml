@@ -5,14 +5,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <com.alimuzaffar.compass.CameraSurfaceView
+    <com.cobyplain.augmentreality.CameraSurfaceView
         android:id="@+id/cameraSurfaceView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
     
-        <com.alimuzaffar.compass.DrawSurfaceView
-	        android:id="@+id/drawSurfaceView"
-	        android:layout_width="fill_parent"
-	        android:layout_height="fill_parent" />
+    <com.cobyplain.augmentreality.DrawSurfaceView
+	    android:id="@+id/drawSurfaceView"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent" />
 
 </FrameLayout>
