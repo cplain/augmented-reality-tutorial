@@ -39,24 +39,30 @@ public class Compass extends Activity {
 	private SensorManager mSensorManager;
 	private Sensor mSensor;
 	LocationManager locMgr;
+	LocationListener locListener;
 
+	
 	private final SensorEventListener mListener = new SensorEventListener() {
+		private float[] mRotationMatrix = new float[16];
+		private float[] mValues = new float[3];
+		
 		public void onSensorChanged(SensorEvent event) {
-			if (DEBUG)
-				Log.d(TAG, "sensorChanged (" + event.values[0] + ", " + event.values[1] + ", " + event.values[2] + ")");
-			
+			SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
+			SensorManager.getOrientation(mRotationMatrix, mValues);
+			if (DEBUG) {
+				Log.d(TAG, "sensorChanged (" + Math.toDegrees(mValues[0]) + ", " + Math.toDegrees(mValues[1]) + ", " + Math.toDegrees(mValues[2]) + ")");
+			}
 		}
 
 		public void onAccuracyChanged(Sensor sensor, int accuracy) {
 		}
 	};
 
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 		setContentView(R.layout.activity_main);
 
 		locMgr = (LocationManager) this.getSystemService(LOCATION_SERVICE); // <2>
@@ -64,7 +70,7 @@ public class Compass extends Activity {
 
 		// using high accuracy provider... to listen for updates
 		locMgr.requestLocationUpdates(high.getName(), 0, 0f,
-				new LocationListener() {
+				locListener = new LocationListener() {
 					public void onLocationChanged(Location location) {
 						// do something here to save this new location
 						Log.d(TAG, "Location Changed");
@@ -101,5 +107,11 @@ public class Compass extends Activity {
 		
 		mSensorManager.unregisterListener(mListener);
 		super.onStop();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		locMgr.removeUpdates(locListener);
+		super.onDestroy();
 	}
 }

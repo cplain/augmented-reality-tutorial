@@ -34,18 +34,26 @@ import android.util.Log;
 public class Compass extends Activity {
 
 	private static final String TAG = "Compass";
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 	private SensorManager mSensorManager;
 	private Sensor mSensor;
 	private DrawSurfaceView mDrawView;
 	LocationManager locMgr;
+	LocationListener locListener;
 
 	private final SensorEventListener mListener = new SensorEventListener() {
+		private float[] mRotationMatrix = new float[16];
+		private float[] mValues = new float[3];
+		
 		public void onSensorChanged(SensorEvent event) {
+			SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
+			SensorManager.getOrientation(mRotationMatrix, mValues);
+			
 			if (DEBUG)
-				Log.d(TAG, "sensorChanged (" + event.values[0] + ", " + event.values[1] + ", " + event.values[2] + ")");
+				Log.d(TAG, "sensorChanged (" + Math.toDegrees(mValues[0]) + ", " + Math.toDegrees(mValues[1]) + ", " + Math.toDegrees(mValues[2]) + ")");
+			
 			if (mDrawView != null) {
-				mDrawView.setOffset(event.values[0]);
+				mDrawView.setOffset((float) Math.toDegrees(mValues[0]));
 				mDrawView.invalidate();
 			}
 		}
@@ -54,12 +62,11 @@ public class Compass extends Activity {
 		}
 	};
 
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 		setContentView(R.layout.activity_main);
 		
 		mDrawView = (DrawSurfaceView) findViewById(R.id.drawSurfaceView);
@@ -70,7 +77,7 @@ public class Compass extends Activity {
 
 		// using high accuracy provider... to listen for updates
 		locMgr.requestLocationUpdates(high.getName(), 0, 0f,
-				new LocationListener() {
+				locListener = new LocationListener() {
 					public void onLocationChanged(Location location) {
 						// do something here to save this new location
 						Log.d(TAG, "Location Changed");
@@ -110,4 +117,10 @@ public class Compass extends Activity {
 		mSensorManager.unregisterListener(mListener);
 		super.onStop();
 	}
+	
+	@Override
+	protected void onDestroy() {
+		locMgr.removeUpdates(locListener);
+		super.onDestroy();
+	}	
 }

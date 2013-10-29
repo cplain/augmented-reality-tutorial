@@ -78,10 +78,10 @@ public class Compass extends Activity implements SensorEventListener, LocationLi
 		SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
 		SensorManager.getOrientation(mRotationMatrix, mValues);
 		if (DEBUG) {
-			Log.d(TAG, "sensorChanged (" + Math.toDegrees(mValues[0]) + ", " + mValues[1] + ", " + mValues[2] + ")");
+			Log.d(TAG, "sensorChanged (" + Math.toDegrees(mValues[0]) + ", " + Math.toDegrees(mValues[1]) + ", " + Math.toDegrees(mValues[2]) + ")");
 		}
 		if (mDrawView != null) {
-			mDrawView.setOffset((float)Math.toDegrees(mValues[0]));
+			mDrawView.setOffset((float) Math.toDegrees(mValues[0]));
 			mDrawView.invalidate();
 		}
 	}
@@ -121,5 +121,11 @@ public class Compass extends Activity implements SensorEventListener, LocationLi
 			Log.d(TAG, "onStop");
 		mSensorManager.unregisterListener(this);
 		super.onStop();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		locMgr.removeUpdates(this);
+		super.onDestroy();
 	}
 }
