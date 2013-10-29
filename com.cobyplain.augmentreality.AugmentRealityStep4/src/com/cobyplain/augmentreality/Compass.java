@@ -31,35 +31,23 @@ import android.util.Log;
  * @author Coby Plain coby.plain@gmail.com, Ali Muzaffar ali@muzaffar.me
  */
 
-public class Compass extends Activity {
+public class Compass extends Activity implements SensorEventListener, LocationListener {
 
 	private static final String TAG = "Compass";
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 	private SensorManager mSensorManager;
 	private Sensor mSensor;
 	private DrawSurfaceView mDrawView;
 	LocationManager locMgr;
 
-	private final SensorEventListener mListener = new SensorEventListener() {
-		public void onSensorChanged(SensorEvent event) {
-			if (DEBUG)
-				Log.d(TAG, "sensorChanged (" + event.values[0] + ", " + event.values[1] + ", " + event.values[2] + ")");
-			if (mDrawView != null) {
-				mDrawView.setOffset(event.values[0]);
-				mDrawView.invalidate();
-			}
-		}
-
-		public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		}
-	};
-
-	@SuppressWarnings("deprecation")
+	private float[] mRotationMatrix = new float[16];
+	private float[] mValues = new float[3];
+	
 	@Override
 	protected void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+		mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 		setContentView(R.layout.activity_main);
 		
 		mDrawView = (DrawSurfaceView) findViewById(R.id.drawSurfaceView);
@@ -69,27 +57,7 @@ public class Compass extends Activity {
 				LocationUtils.createFineCriteria(), true));
 
 		// using high accuracy provider... to listen for updates
-		locMgr.requestLocationUpdates(high.getName(), 0, 0f,
-				new LocationListener() {
-					public void onLocationChanged(Location location) {
-						// do something here to save this new location
-						Log.d(TAG, "Location Changed");
-						mDrawView.setMyLocation(location.getLatitude(), location.getLongitude());
-						mDrawView.invalidate();
-					}
-
-					public void onStatusChanged(String s, int i, Bundle bundle) {
-
-					}
-
-					public void onProviderEnabled(String s) {
-						// try switching to a different provider
-					}
-
-					public void onProviderDisabled(String s) {
-						// try switching to a different provider
-					}
-				});
+		locMgr.requestLocationUpdates(high.getName(), 0, 0f, this);
 
 	}
 
@@ -99,15 +67,65 @@ public class Compass extends Activity {
 			Log.d(TAG, "onResume");
 		super.onResume();
 
-		mSensorManager.registerListener(mListener, mSensor,
-				SensorManager.SENSOR_DELAY_GAME);
+		mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_GAME);
+	}
+	
+	/***
+	 * START SensorEventListener
+	 */
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
+		SensorManager.getOrientation(mRotationMatrix, mValues);
+		if (DEBUG) {
+			Log.d(TAG, "sensorChanged (" + Math.toDegrees(mValues[0]) + ", " + Math.toDegrees(mValues[1]) + ", " + Math.toDegrees(mValues[2]) + ")");
+		}
+		if (mDrawView != null) {
+			mDrawView.setOffset((float) Math.toDegrees(mValues[0]));
+			mDrawView.invalidate();
+		}
 	}
 
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		
+	}
+	/***
+	 * END SensorEventListener
+	 */
+
+	/***
+	 * START LocationListener
+	 */
+	public void onLocationChanged(Location location) {
+		// do something here to save this new location
+		Log.d(TAG, "Location Changed");
+		mDrawView.setMyLocation(location.getLatitude(), location.getLongitude());
+		mDrawView.invalidate();
+	}
+
+	public void onStatusChanged(String s, int i, Bundle bundle) {
+
+	}
+
+	public void onProviderEnabled(String s) {
+	}
+
+	public void onProviderDisabled(String s) {
+	}
+	/***
+	 * END LocationListener
+	 */
 	@Override
 	protected void onStop() {
 		if (DEBUG)
 			Log.d(TAG, "onStop");
-		mSensorManager.unregisterListener(mListener);
+		mSensorManager.unregisterListener(this);
 		super.onStop();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		locMgr.removeUpdates(this);
+		super.onDestroy();
 	}
 }

@@ -46,6 +46,21 @@ To use the compass we will need to use the sensor manager. We will need to decla
         }
     };
 
+**Update**
+
+The code now uses the new ROTATION_VECTOR sense which providers values as Radians and should be converted to Degrees.
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
+		SensorManager.getOrientation(mRotationMatrix, mValues);
+		if (DEBUG) {
+			Log.d(TAG, "sensorChanged (" + Math.toDegrees(mValues[0]) + ", " + mValues[1] + ", " + mValues[2] + ")");
+		}
+		
+	}
+
+
 Right now it doesn't do much. The method `onSensorChanged()` is where we are going to be getting all our compass data, it will be called every time the compass detects a change. All Android devices have super sensitive compasses so you may want to add a little something to make it limit itself but for now we will leave it the way it is.
 
 The other thing we will need to declare is a `LocationManager`, this will be handling all of our GPS data.
@@ -55,7 +70,10 @@ The other thing we will need to declare is a `LocationManager`, this will be han
 Now that we have them both declared we initialise them in `onCreate()`.
 
     mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-    mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+    //old method of getting compass
+    // mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+    //new method uses rotation vector
+    mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
     setContentView(R.layout.activity_main);
     
     locMgr = (LocationManager) this.getSystemService(LOCATION_SERVICE); // <2>
@@ -151,8 +169,8 @@ now we have access to the `DrawSurfaceView` we can start passing data to it! Rem
 
     private final SensorEventListener mListener = new SensorEventListener() {
         public void onSensorChanged(SensorEvent event) {
-            if (mDrawView != null) {
-                mDrawView.setOffset(event.values[0]);
+            if (mDrawView != null) {            
+                //mDrawView.setOffset(event.values[0]);
                 mDrawView.invalidate();
             }
         }
@@ -160,6 +178,25 @@ now we have access to the `DrawSurfaceView` we can start passing data to it! Rem
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
         }
     };
+    
+**UPDATE**
+
+Using the new VOTATION_VECTOR sensor this code becomes:
+
+	private float[] mRotationMatrix = new float[16];
+	private float[] mValues = new float[3];
+	
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
+		SensorManager.getOrientation(mRotationMatrix, mValues);
+		if (mDrawView != null) {
+			mDrawView.setOffset((float)Math.toDegrees(mValues[0]));
+			mDrawView.invalidate();
+		}
+	}
+
+	
 
 You can see here that re have replaced the debug output with a `setOffset()` method. Don't worry about any errors, we will make `setOffset` soon. you can also see a call to invalidate `DrawSurfaceView`, what this will do is force `DrawSurfaceView` to redraw its canvas every time the compass reports a change. If you remember how the logcat looked this is very often so I suggest if your using this somewhere else you may want to do a check to see if it has moved more than a degree or something similar. For our purposes it doesn't matter.
 
